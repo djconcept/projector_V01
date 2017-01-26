@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Name=Projector
+GenericName=GUI Port Scanner
+Exec=python /home/pi/projector/projector.py
+Terminal=false
+Icon=/home/pi/projector/projector-icon.png
+Type=Application
+Categories=Application;Network;Security;
