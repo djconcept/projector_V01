@@ -2,9 +2,9 @@
 Encoding=UTF-8
 Version=1.0
 Name=Projector
+Terminal=true
 GenericName=GUI Port Scanner
 Exec=python /home/pi/projector/projector.py
-Terminal=false
-Icon=/home/pi/projector/projector-icon.png
+Icon=/home/pi/projector/icon/projector-icon.png
 Type=Application
 Categories=Application;Network;Security;

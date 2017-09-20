@@ -12,15 +12,15 @@ import time
 import pygame
 import Tkinter
 from pygame.locals import QUIT, KEYDOWN, K_ESCAPE
-import config_projector # this is the projector config file config_projector.py
+import projector_config # this is the projector config file projector_config.py
 
 # global variables which will change during the program (do not change here)
-#transform_x = config_projector.monitor_w # how many pixels to scale the image width
-#transform_y = config_projector.monitor_h # how many pixels to scale the image height
-screen_width = 255
-screen_height = 211
-transform_x = 700
-transform_y = 500
+#transform_x = projector_config.monitor_w # how many pixels to scale the image width
+#transform_y = projector_config.monitor_h # how many pixels to scale the image height
+screen_width = 0
+screen_height = 0
+transform_x = 0
+transform_y = 0
 offset_x = 0 # how far right of the top-left pixel to display the image
 offset_y = 0 # how far down from the top-left pixel to display the image
 current = 0 # which file in the list to show
@@ -30,7 +30,8 @@ file_list = []  # a list of all images being shown
 def mount_pics():
     try:
         # mount the drive 
-        cmd = "sudo mount -t cifs "+config_projector.server_mount_path+" "+config_projector.client_mount_path+" -o user="+config_projector.user_name+",pass="+config_projector.user_password
+        cmd = "sudo mount -t cifs "+projector_config.server_mount_path+" "+projector_config.client_mount_path+" -o user="+projector_config.user_name+",pass="+projector_config.user_password
+        print cmd
         os.system(cmd)
     except Exception, e:
         tb = sys.exc_info()[2]
@@ -40,7 +41,8 @@ def mount_pics():
 def mount_photobooth():
     try:
         # mount the drive 
-        cmd = "sudo mount -t cifs "+config_projector.photobooth_server_mount_path+" "+config_projector.photobooth_client_mount_path+" -o user="+config_projector.photobooth_user_name+",pass="+config_projector.photobooth_user_password
+        cmd = "sudo mount -t cifs "+projector_config.photobooth_mount_path+" "+projector_config.photobooth_client_mount_path+" -o user="+projector_config.photobooth_user_name+",pass="+projector_config.photobooth_user_password
+        print cmd
         os.system(cmd)
     except Exception, e:
         tb = sys.exc_info()[2]
@@ -52,7 +54,7 @@ def walktree(top, callback):
     callback function for each regular file. Taken from the module-stat
     example at: http://docs.python.org/lib/module-stat.html
     """
-    for f in sorted(os.listdir(top)):
+    for f in sorted(os.listdir(top), reverse=True):
         pathname = os.path.join(top, f)
         mode = os.stat(pathname)[stat.ST_MODE]
         if stat.S_ISREG(mode):
@@ -75,10 +77,10 @@ def addtolist(file, extensions=['.jpg','.jpeg']):
             print 'Adding to list: ', file
             file_list.append(file)
 
-            if config_projector.use_prime:
-                if ((len(file_list) % (config_projector.prime_freq +1)) == 0):
+            if projector_config.use_prime:
+                if ((len(file_list) % (projector_config.prime_freq +1)) == 0):
                     # show prime slide at regular intervals
-                    file_list.append(config_projector.prime_slide) # start with the prime slide
+                    file_list.append(projector_config.prime_slide) # start with the prime slide
         else:
             print 'Skipping: ', file, ' (thumbnail image)'
     else:
@@ -90,7 +92,9 @@ def input(events):
     for event in events:  # Hit the ESC key to quit the slideshow.
         if (event.type == QUIT or
             (event.type == KEYDOWN and event.key == K_ESCAPE)):
+            pygame.display.quit()
             pygame.quit()
+            sys.exit(1)
 
 def set_demensions(img_w, img_h, screen_w, screen_h):
     # set variables to properly display the image on screen
@@ -135,14 +139,18 @@ def find_pics():
 
     file_list = [] # clear list
 
-    if config_projector.use_prime:
-        file_list.append(config_projector.prime_slide) # start with the prime slide
+    if projector_config.use_prime:
+        file_list.append(projector_config.prime_slide) # start with the prime slide
 
-    walktree(config_projector.pics_folder, addtolist)  # this may take a while...
+    walktree(projector_config.pics_folder, addtolist)  # this may take a while...
+    
+    if len(file_list) <= 10: # note one is the prime slide, if used
+        walktree(projector_config.pics_folder_client, addtolist)  # this may take a while...
 
-    if len(file_list) <= 1: # note one is the prime slide, if used
+    if len(file_list) < 1: # note one is the prime slide, if used
         print "Sorry. No images found. Exiting."
-        sys.exit(1)
+        file_list.append(projector_config.waiting_slide)
+        #sys.exit(1)
 
     current = 0
     num_files = len(file_list)
@@ -172,7 +180,7 @@ def main():
     pygame.display.set_mode(max(modes))
 
     screen = pygame.display.get_surface()
-    pygame.display.set_caption(config_projector.title)
+    pygame.display.set_caption(projector_config.title)
     pygame.display.toggle_fullscreen()
     pygame.mouse.set_visible(False) #hide the mouse cursor
 
@@ -195,7 +203,7 @@ def main():
             pygame.display.flip()
 
             input(pygame.event.get())
-            time.sleep(config_projector.waittime)
+            time.sleep(projector_config.waittime)
         except pygame.error as err:
             print "Failed to display %s: %s" % (file_list[current], err)
 
@@ -205,12 +213,30 @@ def main():
             print '----------------------- Restart slideshow -----------------------'
             find_pics() # check for available images to display
 
+
 print 'Projector running'
-
 print 'Waiting a bit to make sure the photo booth has time to boot.'
-time.sleep(3) # wait a bit until the other RPi is connected
+#waiting= True
+#while waiting:
+#    counter = 0
+#    t = os.system('ping 192.168.2.10')
+#    if t:
+#        waiting = False
+#        print(t)
+#    else:
+#        counter +=1
+#        ptint (t)
+#        if counter >=10:
+#            print(counter)
+#            waiting=False
+#            print(waiting)
 
+
+time.sleep(2) # wait a bit until the other RPi is connected
+print 'mount_pics'
 mount_pics() # mount the drive on startup of program
-
-# run the main program
+print 'mount_photobooth'
+mount_photobooth()
+time.sleep(2) # wait a bit until the other RPi is connected
+print 'run the main program'
 main()
