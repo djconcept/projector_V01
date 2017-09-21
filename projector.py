@@ -155,6 +155,76 @@ def find_pics():
     current = 0
     num_files = len(file_list)
 
+def init_pygame():
+    pygame.init()
+    size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
+    pygame.display.set_caption('Photo Booth Pics')
+    pygame.mouse.set_visible(False) #hide the mouse cursor	
+    return pygame.display.set_mode(size, pygame.FULLSCREEN)
+
+def set_dimensions(img_w, img_h):
+    # set variables to properly display the image on screen
+
+    # connect to global vars
+    global transform_y, transform_x, offset_y, offset_x
+    root = Tkinter.Tk()
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    print screen_width
+    print screen_height
+    monitor_w = screen_width
+    monitor_h = screen_height
+    # based on output screen resolution, calculate how to display
+    ratio_h = (monitor_w * img_h) / img_w 
+
+    if (ratio_h < monitor_h):
+        #Use horizontal black bars
+        transform_y = ratio_h
+        transform_x = monitor_w
+        offset_y = (monitor_h - ratio_h) / 2
+        offset_x = 0
+    elif (ratio_h > monitor_h):
+        #Use vertical black bars
+        transform_x = (monitor_h * img_w) / img_h
+        transform_y = monitor_h
+        offset_x = (monitor_w - transform_x) / 2
+        offset_y = 0
+    else:
+        #No need for black bars as photo ratio equals screen ratio
+        transform_x = monitor_w
+        transform_y = monitor_h
+        offset_y = offset_x = 0
+
+    # uncomment these lines to troubleshoot screen ratios
+    #print str(img_w) + " x " + str(img_h)
+    #print "ratio_h: "+ str(ratio_h)
+    #print "transform_x: "+ str(transform_x)
+    #print "transform_y: "+ str(transform_y)
+    #print "offset_y: "+ str(offset_y)
+    #print "offset_x: "+ str(offset_x)
+
+def show_image(image_path, t):
+	#global transform_y, transform_x, offset_y, offset_x
+	screen = init_pygame()
+	img=pygame.image.load(image_path).convert()
+	set_dimensions(img.get_width(), img.get_height())
+	img = pygame.transform.scale(img,(transform_x,transform_y))
+
+#	sprite = pygame.sprite.Sprite()
+#	sprite.image = img
+#	sprite.rect = img.get_rect()
+#
+#	font = pygame.font.SysFont('Sans', 20)
+#	text=font.render(t, 1,(255,255,255))
+#	sprite.image.blit(text, (400, 10))
+#
+#	group = pygame.sprite.Group()
+#	group.add(sprite)
+#	group.draw(screen)
+
+	screen.blit(img,(offset_x,offset_y))
+	pygame.display.flip()
+
 def main():
     global file_list, current, num_files
 
@@ -231,8 +301,12 @@ print 'Waiting a bit to make sure the photo booth has time to boot.'
 #            waiting=False
 #            print(waiting)
 
+show_image("/home/pi/projector/projector_waiting.png", "test");
+for j in range(0,60):
+#	show_image("/home/pi/projector/projector_waiting.png", str(j));
+	time.sleep(1) # wait a bit until the other RPi is connected
+	print 60-j
 
-time.sleep(2) # wait a bit until the other RPi is connected
 print 'mount_pics'
 mount_pics() # mount the drive on startup of program
 print 'mount_photobooth'
