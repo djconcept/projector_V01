@@ -1,6 +1,10 @@
 # projector_V01
 
+This project runs on a Raspberry Pi V3
+https://shop.mchobby.be/raspberry-pi-3/819-raspberry-pi-3-de-stock--3232100008199.html
 
+
+NB:
 Edit fstab to add external storage
 
 sudo nano /etc/fstab
